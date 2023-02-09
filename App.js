@@ -38,8 +38,16 @@ export default function App() {
         {isOnboardingCompleted && fontsLoaded ? (
           // Onboarding completed, user is signed in
           <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{ headerShown: false }}
+            />
           </>
         ) : (
           // User is NOT signed in

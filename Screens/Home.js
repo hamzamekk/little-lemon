@@ -6,10 +6,25 @@ import {
   StyleSheet,
   TextInput,
   ScrollView,
-  Pressable,
   TouchableOpacity,
+  Alert,
+  Pressable,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { openDatabase } from "expo-sqlite";
+import { useNavigation } from "@react-navigation/native";
+
+const db = openDatabase(
+  {
+    name: "SQLite",
+    location: "default",
+    createFromLocation: "~SQLite.db",
+  },
+  () => {},
+  (error) => {
+    console.log("ERROR: " + error);
+  }
+);
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -17,6 +32,7 @@ const Home = () => {
   const [data, setData] = useState([]);
   const [dataFiltered, setDataFiltered] = useState([]);
   const [category, setCategory] = useState("");
+  const { navigate } = useNavigation();
 
   useEffect(() => {
     getUser();
@@ -31,11 +47,13 @@ const Home = () => {
         (item) => item.category === category && item.name.includes(value)
       );
       setDataFiltered(newData);
-    } else {
+    } else if (!!value) {
       newData = newData.filter((item) => item.name.includes(value));
       setDataFiltered(newData);
+    } else {
+      setDataFiltered(newData);
     }
-  }, [category, value]);
+  }, [category, value, data]);
 
   const onCategoryPress = (cat) => {
     if (cat === category) {
@@ -52,6 +70,29 @@ const Home = () => {
     }
   };
 
+  const getDataBase = () => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        "create table if not exists DataTable (id integer primary key not null, column_1 int, column_2 int, column_3 text);",
+        [],
+        (e) => console.log(e)
+      );
+
+      tx.executeSql(
+        "insert into DataTable (id, column_1, column_2, column_3) values (?, ?, ?, ?)",
+        [1, "argument_1", "argument_2", "argument_3"],
+        (e) => console.log(e)
+      );
+
+      tx.executeSql(
+        "select * from DataTable",
+        [],
+        (_, { rows: { _array } }) => Alert.alert(JSON.stringify(_array)),
+        () => console.log("error fetching")
+      );
+    });
+  };
+
   const getData = () => {
     fetch(
       "https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json"
@@ -63,7 +104,8 @@ const Home = () => {
   return (
     <View style={styles.container}>
       <ScrollView>
-        <View
+        <Pressable
+          onPress={() => navigate("Profile")}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -93,7 +135,7 @@ const Home = () => {
               <Text>{user?.firstName.slice(2)}</Text>
             </View>
           )}
-        </View>
+        </Pressable>
         <View style={{ backgroundColor: "#495E57", padding: "5%" }}>
           <Text
             style={{ fontFamily: "markaz", fontSize: 64, color: "#F4CE14" }}
@@ -221,15 +263,14 @@ const Home = () => {
                     {item?.price}
                   </Text>
                 </View>
-                {/* {item?.image && (
+                {item?.image && (
                   <Image
-                    source={require(`../assets/${item?.image}`.replace(
-                      "jpg",
-                      "png"
-                    ))}
+                    source={{
+                      uri: `https://github.com/Meta-Mobile-Developer-PC/Working-With-Data-API/blob/main/images/${item?.image}?raw=true`,
+                    }}
                     style={{ height: 80, width: 80 }}
                   />
-                )} */}
+                )}
               </View>
             );
           })}
